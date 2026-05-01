@@ -657,6 +657,7 @@ class Judger:
         # deal with predition list
         extracted_pred = self.split_by_comma(extracted_pred)
         extracted_pred = [self.norm_ans_str(item) for item in extracted_pred]
+        print(extracted_pred)
         gold = [self.norm_ans_str(item) for item in gold]
         if type_sequence != None:
             judge_tf_list = [item == "TF" for item in type_sequence]
@@ -874,6 +875,7 @@ class Judger:
             return expression.strip()
         exp1 = extract_expression(pred)
         exp2 = extract_expression(gold)
+        print(exp1, exp2)
         expr1_sym = trigsimp(self.sympy_sub_pi(sympify(parse_latex(exp1))))
         expr2_sym = trigsimp(self.sympy_sub_pi(sympify(parse_latex(exp2))))
 

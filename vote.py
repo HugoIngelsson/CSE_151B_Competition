@@ -1,0 +1,132 @@
+import json
+import re
+from collections import Counter
+from typing import List
+
+### JSONL parsers
+
+def extract_letter(text: str) -> str:
+    """Extracts the MCQ letter."""
+    m = re.search(r"\\boxed\{([A-Za-z])\}", text)
+    if m:
+        return m.group(1).upper()
+    matches = re.findall(r"\b([A-Z])\b", text.upper())
+    return matches[-1] if matches else ""
+
+def extract_boxed_answer(text: str) -> str:
+    """Extracts the free-form math answer from \boxed{}, handling nested braces."""
+
+    # Check for valid answer. If valid answer(s) exists, take the last instance. 
+    box_str = "\\boxed{"
+    start_idx = text.rfind(box_str) 
+    if start_idx == -1: return ""
+
+
+    # Find where the last brace ends. 
+    content_start = start_idx + len(box_str)
+    brace_count = 1
+    for i in range(content_start, len(text)):
+        if text[i] == '{': brace_count += 1
+        elif text[i] == '}': brace_count -= 1
+        
+        if brace_count == 0: 
+            return text[content_start:i].strip()
+    return ""
+
+### Majority voting
+def majority_vote_jsonl(file_paths: List[str], output_path: str) -> None:
+    """
+    Performs majority voting across multiple JSONL result files.
+    Aligns questions by their 'id' field.
+    Tiebreaker: The file with the largest index in `file_paths` wins.
+
+    Assumes all files contain the same set of question IDs.
+    """
+    
+    if not file_paths:
+        print("Error: No file paths provided.")
+        return
+
+    # Load all datasets into dictionaries keyed by id
+    datasets = []
+    for path in file_paths:
+        file_dict = {}
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    item = json.loads(line)
+                    file_dict[item["id"]] = item
+            datasets.append(file_dict)
+        except Exception as e:
+            print("error:", e)
+    
+
+    combined_results = []
+    
+    # Iterate through the IDs found in the first file
+    base_ids = sorted(datasets[0].keys())
+
+    for q_id in base_ids:
+        
+        # Gather the items for this specific ID across all files
+        items = [ds.get(q_id, {}) for ds in datasets]
+        
+        is_mcq = items[0].get("is_mcq", False)
+        raw_responses = [item.get("response", "") for item in items]
+        
+        # Extract the answers
+        extracted_answers = []
+        for text in raw_responses:
+            if is_mcq:
+                extracted_answers.append(extract_letter(text))
+            else:
+                extracted_answers.append(extract_boxed_answer(text))
+                
+        # Count votes
+        vote_counts = Counter(extracted_answers)
+        max_votes = max(vote_counts.values())
+        
+        # Find tied votes
+        tied_answers = [ans for ans, count in vote_counts.items() if count == max_votes]
+        
+        winning_answer = None
+        winning_raw_text = ""
+        
+        # Resolve Ties
+        if len(tied_answers) == 1:
+            # Clear majority
+            winning_answer = tied_answers[0]
+            winning_index = extracted_answers.index(winning_answer)
+            winning_raw_text = raw_responses[winning_index]
+        else:
+            # Tiebreaker: largest index wins
+            for file_idx in range(len(extracted_answers) - 1, -1, -1):
+                ans = extracted_answers[file_idx]
+                if ans in tied_answers:
+                    winning_answer = ans
+                    winning_raw_text = raw_responses[file_idx]
+                    break 
+        
+        # Construct combined JSON object
+        new_record = {
+            "id": q_id,
+            "is_mcq": is_mcq,
+            "response": winning_raw_text
+        }
+        combined_results.append(new_record)
+
+    # Write to the output file
+    with open(output_path, 'w', encoding='utf-8') as f:
+        for record in combined_results:
+            f.write(json.dumps(record) + "\n")
+            
+    print("Saved final results to:", output_path)
+
+### Main
+
+if __name__ == "__main__":
+    
+    input_files = ["results/voting/v1_initial.jsonl", "results/voting/v1_reruns.jsonl", "results/voting/v2.jsonl", "results/voting/v3.jsonl"]
+    output_file = "results/FINAL_COMBINED.jsonl"
+    
+    majority_vote_jsonl(input_files, output_file)

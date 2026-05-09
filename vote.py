@@ -33,6 +33,16 @@ def extract_boxed_answer(text: str) -> str:
             return text[content_start:i].strip()
     return ""
 
+def has_answer(s):
+    if (s.rfind('</think>') == -1):
+        return False
+    else:
+        s = s[s.rfind('</think>'):]
+        if s.rfind('\\boxed{') == s.rfind('\\boxed{}'):
+            return False
+        
+    return True
+
 ### Majority voting
 def majority_vote_jsonl(file_paths: List[str], output_path: str) -> None:
     """
@@ -76,12 +86,33 @@ def majority_vote_jsonl(file_paths: List[str], output_path: str) -> None:
         
         # Extract the answers
         extracted_answers = []
-        for text in raw_responses:
+        answer_file_indices = []
+        for idx, text in enumerate(raw_responses):
+            if not has_answer(text):
+                continue
+
+            answer_file_indices.append(idx)
             if is_mcq:
                 extracted_answers.append(extract_letter(text))
             else:
                 extracted_answers.append(extract_boxed_answer(text))
-                
+
+        # No viable answer to choose from 
+        if len(extracted_answers) == 0:
+            for text in raw_responses:
+                # Ensure the answer actually has some text, even if we know it's wrong
+                if len(text) > 0:
+                    new_record = {
+                        "id": q_id,
+                        "is_mcq": is_mcq,
+                        "response": text
+                    }
+                    combined_results.append(new_record)
+                    break
+                    
+            print("No answer:", q_id)
+            continue
+
         # Count votes
         vote_counts = Counter(extracted_answers)
         max_votes = max(vote_counts.values())
@@ -97,14 +128,14 @@ def majority_vote_jsonl(file_paths: List[str], output_path: str) -> None:
             # Clear majority
             winning_answer = tied_answers[0]
             winning_index = extracted_answers.index(winning_answer)
-            winning_raw_text = raw_responses[winning_index]
+            winning_raw_text = raw_responses[answer_file_indices[winning_index]]
         else:
             # Tiebreaker: largest index wins
             for file_idx in range(len(extracted_answers) - 1, -1, -1):
                 ans = extracted_answers[file_idx]
                 if ans in tied_answers:
                     winning_answer = ans
-                    winning_raw_text = raw_responses[file_idx]
+                    winning_raw_text = raw_responses[answer_file_indices[file_idx]]
                     break 
         
         # Construct combined JSON object

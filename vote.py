@@ -1,5 +1,7 @@
 import json
 import re
+import sys
+from tqdm import tqdm
 from collections import Counter
 from typing import List
 
@@ -44,7 +46,7 @@ def has_answer(s):
     return True
 
 ### Majority voting
-def majority_vote_jsonl(file_paths: List[str], output_path: str) -> None:
+def majority_vote_jsonl(file_paths: List[str], output_path: str, weights: list) -> None:
     """
     Performs majority voting across multiple JSONL result files.
     Aligns questions by their 'id' field.
@@ -75,8 +77,9 @@ def majority_vote_jsonl(file_paths: List[str], output_path: str) -> None:
     
     # Iterate through the IDs found in the first file
     base_ids = sorted(datasets[0].keys())
+    tie_counts = [[] for _ in range(len(file_paths)+1)]
 
-    for q_id in base_ids:
+    for q_id in tqdm(base_ids):
         
         # Gather the items for this specific ID across all files
         items = [ds.get(q_id, {}) for ds in datasets]
@@ -109,16 +112,29 @@ def majority_vote_jsonl(file_paths: List[str], output_path: str) -> None:
                     }
                     combined_results.append(new_record)
                     break
-                    
+
+            tie_counts[0].append(q_id)  
             print("No answer:", q_id)
             continue
 
+        sys.path.insert(0, ".")
+        from judger import Judger
+        judger = Judger(strict_extract=False)
+
+        match_counts = [weights[i] for i in answer_file_indices]
+        for i in range(len(extracted_answers)-1):
+            for j in range(i+1,len(extracted_answers)):
+                gold = judger.split_by_comma(extracted_answers[j])
+                result = judger.auto_judge(f'\\boxed{'{'}{extracted_answers[i]}{'}'}', gold, [chr(i+65) for i in range(26)])
+                if result:
+                    match_counts[i] += 1
+                    match_counts[j] += 1
+
         # Count votes
-        vote_counts = Counter(extracted_answers)
-        max_votes = max(vote_counts.values())
+        max_votes = max(match_counts)
         
         # Find tied votes
-        tied_answers = [ans for ans, count in vote_counts.items() if count == max_votes]
+        tied_answers = [extracted_answers[i] for i in range(len(extracted_answers)) if match_counts[i] == max_votes]
         
         winning_answer = None
         winning_raw_text = ""
@@ -138,6 +154,7 @@ def majority_vote_jsonl(file_paths: List[str], output_path: str) -> None:
                     winning_raw_text = raw_responses[answer_file_indices[file_idx]]
                     break 
         
+        tie_counts[max_votes].append(q_id)
         # Construct combined JSON object
         new_record = {
             "id": q_id,
@@ -152,12 +169,33 @@ def majority_vote_jsonl(file_paths: List[str], output_path: str) -> None:
             f.write(json.dumps(record) + "\n")
             
     print("Saved final results to:", output_path)
+    print("Max vote counts:")
+    for i in range(len(file_paths)+1):
+        print(f'{i}:', tie_counts[i])
 
 ### Main
 
 if __name__ == "__main__":
     
-    input_files = ["results/voting/v1_initial.jsonl", "results/voting/v1_reruns.jsonl", "results/voting/v2.jsonl", "results/voting/v3.jsonl"]
+    input_files = [
+        "results/voting/v1_initial.jsonl", 
+        "results/voting/v1_reruns.jsonl", 
+        "results/voting/v2.jsonl", 
+        "results/voting/v3.jsonl", 
+        "results/voting/v4.jsonl",
+        "results/voting/v5.jsonl",
+        "results/voting/v6.jsonl",
+        "results/voting/v7.jsonl",
+        "results/voting/v8.jsonl",
+        "results/voting/v9.jsonl",
+        "results/voting/v10.jsonl",
+        "results/voting/v11.jsonl",
+        "results/voting/v12.jsonl",
+        "results/voting/lora_initial.jsonl"
+    ]
     output_file = "results/FINAL_COMBINED.jsonl"
+
+    weights = [1] * len(input_files)
+    weights[-1] = 1
     
-    majority_vote_jsonl(input_files, output_file)
+    majority_vote_jsonl(input_files, output_file, weights)

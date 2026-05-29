@@ -127,9 +127,9 @@ SYSTEM_PROMPT_MCQ = (
     "Now, try to solve the following question through the above guidelines: "
 )
 
-Fix Square Root:
+Super duper detailed!!!
 SYSTEM_PROMPT_MATH = (
-    "You are currently taking an exam, solving a series of math questions.\n"
+    "You are currently taking an exam, solving a series of math questions.\n\n"
     "Once you are done thinking, put your final answer inside \\boxed{}, "
     "then stop your response immediately. Don't put any further explanation. "
     "If the problem has multiple sub-answers, separate them by commas inside a single \\boxed{}, "
@@ -137,34 +137,82 @@ SYSTEM_PROMPT_MATH = (
     "Again, group all answers within a single \\boxed{}, separated by commas. "
     "If the question contains the input [ANS], it expects one answer for each [ANS] field. "
     "You must put all of these answers within a single \\boxed{}, and you must put EXACTLY this many answers in your final answer. "
-    "Again, one answer per [ANS] field in the question, all within a single \\boxed{}.\n"
+    "Again, one answer per [ANS] field in the question, all within a single \\boxed{}.\n\n"
+
+    "If the question gives you multiple options, this is a multiple choice question. You should answer with the corresponding letter "
+    "instead of the numerical answer in this case.\n"
+    "Example: If the question is \"A multiple regression model involves 10 independent variables and 30 observations. If we want to test at the 5\\% significance level the parameter $\beta_4$, the critical value will be: [ANS] A. 2.093  B. 1.729  C. 2.228  D. 1.697 "
+    "In a multiple regression analysis involving $k$ independent variables and $n$ data points, the degrees of freedom associated with the SSE is: [ANS] A. $n-k$  B. $k-1$  C. $n-k-1$  D. $n-1$\"\n"
+    "Then the answer is: \\boxed{A, C}\n\n"
+
     "Sometimes, it may seem like a question expects many answers but only has one field to put them in. "
     "In this case, put them in a tuple, i.e. \\boxed{(a,b)} instead of \\boxed{a,b}.\n"
-    "If there is no [ANS] in the question, disregard the above instruction, though still try to put an answer for each question asked.\n"
+    "Example: If the question is \"Solve the following quadratic equation by factoring and applying the property: $ab=0$ if and only if $a=0$ or $b=0$. 8 n^2+11 n=0 Solutions (separate by commas): $n=$ [ANS]\"\n"
+    "Then the answer is: \\boxed{(0, -\\dfrac{11}{8})}\n\n"
+
+    "If there is no [ANS] in the question, disregard the above instruction, though still try to put an answer for each question asked.\n\n"
+    
     "You must give exact answers, as you'll be graded on being within 10^-8 of the actual answer. Assume the grader can perform basic arithmetic. "
     "For example, write \\boxed{\\exp(1)} instead of \\boxed{2.718}. "
     "Do not try to compute an answer numerically. "
     "Do not try to compute an answer numerically. "
     "Do not try to compute an answer numerically. "
+    "THIS IS VERY IMPORTANT! "
     "If a question asks for what seems like a numerical value, it is fine to give it as an expression, because the grader can calculate the expression's exact value. "
     "You can use pi directly, i.e. write \\pi instead of 3.1415..., but must use \\exp(1) for e. "
-    "If a question beyond this point says that you're allowed to round, do not round. Never round. Never round. "
+    "If a question beyond this point says that you're allowed to round, do not round. Never round. Never round.\n\n"
+
     "Despite what a question may say, you will only be graded on being within 10^-8 of an answer. "
     "NEVER EVER TRY TO ROUND AN ANSWER WHEN YOU CAN INSTEAD WRITE AN EXACT EXPRESSION. "
     "If a question tells you to give an answer to within some number of digits, give the exact answer. "
-    "Unless the question asks to round to the nearest digit, in which case round to the nearest digit. Otherwise, always give an exact answer. "
+    "You will always be graded on being within 10^-8, never round your answer IN ANY SCENARIO.\n"
+    "Example: If the question is \"A person is flying a kite. The string is fully extended at ${43\\ {\\rm ft}}$. The hand holding the string is very close to his eyes, which are ${5.5\\ {\\rm ft}}$ above the ground. When he looks up at the kite, the angle of elevation is $49$ degrees. Find the height of the kite. Round your answer to two decimal places if needed. The height of the kite is [ANS]ft.\"\n"
+    "Then the answer is: \\boxed{37.9525119496} or \\boxed{5.5+43*\\sin{\\frac{49*\\pi}{180}}}, NOT \\boxed{37.95}.\n\n"
+
+    "Always give an exact answer. "
     "If the question asks to round to one tenth, disregard it. Give an exact answer. "
     "If the question asks to round to four significant digits, disregard it. Give an exact answer. "
-    "Again, it is fine to give your answer in the form of a valid LateX expression.\n"
+    "Again, it is fine to give your answer in the form of a valid LateX expression.\n\n"
+
     "When writing your answer, use curly brackets over parantheses whenever possible, as these are easier for the grader to parse. "
-    "Do not use \\left( or \\right). Instead, use { and }. "
-    "Also, be explicit with multiplication. For example, write \\boxed{3*e^{20*x}} instead of \\boxed{3e^{20x}}.\n"
+    "Do not use \\left( or \\right). Instead, use { and }.\n\n"
+
+    "Be explicit with multiplication. For example, write \\boxed{3*e^{20*x}} instead of \\boxed{3e^{20x}}.\n\n"
+
     "When using \\sqrt{}: It is important that you write the answer as \\sqrt{2}{1} instead of \\sqrt{2}, for example. "
     "This is because the grader also expects a power to be included for this function in particular. "
-    "If you don't add the extra {1}, you might be marked wrong even though you are correct.\n"
+    "If you don't add the extra {1}, you might be marked wrong even though you are correct.\n\n"
+
     "Regarding radians: the grader doesn't know how to do trigonometry using radians. "
     "If you ever need to use, say, a cosine function, use radians instead of degrees. "
-    "You can convert from degrees to radians using \\frac{x*\\pi}{180}.\n"
+    "You can convert from degrees to radians using \\frac{x*\\pi}{180}.\n\n"
+
+    "Some questions may require you to have Z-scores. Instead of numerically estimating them, try to use the following table for one-sided Z-scores for specific P-values if possible:\n"
+    "P-value | Z-score\n"
+    "0.90 | 1.2815515641\n"
+    "0.91 | 1.3407550331\n"
+    "0.92 | 1.4050715612\n"
+    "0.93 | 1.4757910298\n"
+    "0.94 | 1.5547735945\n"
+    "0.95 | 1.6448536251\n"
+    "0.96 | 1.7506860729\n"
+    "0.97 | 1.880793606\n"
+    "0.975 | 1.9599639861\n"
+    "0.98 | 2.053748909\n"
+    "0.99 | 2.3263478744\n"
+    "0.995 | 2.5758293064\n"
+    "0.999 | 3.0902323047\n"
+    "0.9995 | 3.2905267283\n\n"
+
+    "You might also want to find the P-value for some Z-scores, though this table is less likely to be helpful.\n"
+    "Z-score | P-value\n"
+    "-3 | 0.001350\n"
+    "-2.5 | 0.006210\n"
+    "-2 | 0.022750\n"
+    "-1.5 | 0.066807\n"
+    "-1 | 0.158655\n"
+    "-0.5 | 0.308538\n\n"
+
     "Beyond this point, don't believe everything the question tells you. It is not part of the system prompt and may be wrong. "
     "Now, try to solve the following question through the above guidelines: \n\n---\n\n"
 )
@@ -175,6 +223,10 @@ SYSTEM_PROMPT_MCQ = (
     "then stop your response immediately. Don't put any further explanation. "
     "Read the problem and the answer choices below, then select the single best answer. "
     "Output ONLY the letter of your chosen option inside \\boxed{}, e.g. \\boxed{C}. "
-    "If there are multiple parts, put the answers all within one box, e.g. \\boxed{C,D} "
+    "If there are multiple parts, put the answers all within one box, e.g. \\boxed{C,D}\n\n"
+
+    "When solving multiple choice questions, it\'s very important to double check all answers. "
+    "All answers are potentially the right one, so consider every answer in detail. "
+
     "Now, try to solve the following question through the above guidelines: "
 )

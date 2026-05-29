@@ -77,7 +77,7 @@ def majority_vote_jsonl(file_paths: List[str], output_path: str, weights: list) 
     
     # Iterate through the IDs found in the first file
     base_ids = sorted(datasets[0].keys())
-    tie_counts = [[] for _ in range(len(file_paths)+1)]
+    tie_counts = [[] for _ in range(sum(weights)+1)]
 
     for q_id in tqdm(base_ids):
         
@@ -170,13 +170,35 @@ def majority_vote_jsonl(file_paths: List[str], output_path: str, weights: list) 
             
     print("Saved final results to:", output_path)
     print("Max vote counts:")
-    for i in range(len(file_paths)+1):
+    for i in range(sum(weights)+1):
         print(f'{i}:', tie_counts[i])
 
 ### Main
 
 if __name__ == "__main__":
     
+    # input_files = [
+    #     "results/voting/v1_initial.jsonl", 
+    #     "results/voting/v1_reruns.jsonl", 
+    #     "results/voting/v2.jsonl", 
+    #     "results/voting/v3.jsonl", 
+    #     "results/voting/v4.jsonl",
+    #     "results/voting/v5.jsonl",
+    #     "results/voting/v6.jsonl",
+    #     "results/voting/v7.jsonl",
+    #     "results/voting/v8.jsonl",
+    #     "results/voting/v9.jsonl",
+    #     "results/voting/v10.jsonl",
+    #     "results/voting/v11.jsonl",
+    #     "results/voting/v12.jsonl",
+    #     "results/voting/lora_initial.jsonl"
+    # ]
+
+    # input_files = [
+    #     "results/lora/lora-jack.jsonl",
+    #     "results/voting/lora-rerun-misses.jsonl"
+    # ]
+
     input_files = [
         "results/voting/v1_initial.jsonl", 
         "results/voting/v1_reruns.jsonl", 
@@ -184,18 +206,12 @@ if __name__ == "__main__":
         "results/voting/v3.jsonl", 
         "results/voting/v4.jsonl",
         "results/voting/v5.jsonl",
-        "results/voting/v6.jsonl",
-        "results/voting/v7.jsonl",
-        "results/voting/v8.jsonl",
-        "results/voting/v9.jsonl",
-        "results/voting/v10.jsonl",
-        "results/voting/v11.jsonl",
-        "results/voting/v12.jsonl",
-        "results/voting/lora_initial.jsonl"
+        "results/super-detailed/super-duper-detailed-prompt.jsonl",
     ]
+
     output_file = "results/FINAL_COMBINED.jsonl"
 
     weights = [1] * len(input_files)
-    weights[-1] = 1
+    weights[-1] = 6
     
     majority_vote_jsonl(input_files, output_file, weights)

@@ -245,7 +245,7 @@ def inference(data, prompts, llm):
     if(debug):
         print(f"Generating responses for {len(prompts)} questions...")
     
-    batch_size = 2
+    batch_size = 100
     start_time = time.time()
 
     if(debug):

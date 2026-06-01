@@ -223,8 +223,10 @@ def run_inference(data, prompts, llm):
     
     batch_size = 100
     start_time = time.time()
-    elapsed_minutes = (time.time() - start_time) / 60
-    print(f"Time elapsed: {elapsed_minutes:.2f} minutes")
+
+    if(debug):
+        elapsed_minutes = (time.time() - start_time) / 60
+        print(f"Time elapsed: {elapsed_minutes:.2f} minutes")
 
     # Track total processed for the final print statement
     total_processed = 0 
@@ -237,12 +239,14 @@ def run_inference(data, prompts, llm):
         batch_outputs = llm.generate(
             batch_prompts,
             sampling_params=SAMPLING_PARAMS,
-            use_tqdm=False # doesn't print progress bar widget
+            use_tqdm=True # should print progress bar widget
         )
         
         responses = [[comp.text.strip() for comp in out.outputs] for out in batch_outputs]
-        elapsed_minutes = (time.time() - start_time) / 60
-        print(f"Progress: {min(i + batch_size, len(prompts))} / {len(prompts)} questions generated. Time elapsed: {elapsed_minutes:.2f} minutes")
+
+        if(debug):
+            elapsed_minutes = (time.time() - start_time) / 60
+            print(f"Progress: {min(i + batch_size, len(prompts))} / {len(prompts)} questions generated. Time elapsed: {elapsed_minutes:.2f} minutes")
         
         batch_results = []
         
@@ -313,7 +317,9 @@ def run_inference(data, prompts, llm):
                 writer.writerow(record)
                 
         total_processed += len(batch_results)
-        print(f"{total_processed}/{len(prompts)} total records saved to {out_path}\n")
+
+        if(debug):
+            print(f"{total_processed}/{len(prompts)} total records saved to {out_path}\n")
 
 def main(args):
 

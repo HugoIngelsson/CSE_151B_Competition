@@ -35,45 +35,65 @@ SAMPLING_PARAMS = SamplingParams(
     repetition_penalty=1.0,
 )
 
-
 SYSTEM_PROMPT_MATH = (
-    "You are an expert math solver taking an online exam. Follow the rules strictly and carefully.\n"
-    "RULES:\n"
-    "1. BOXED ANSWERS: You must put all answers inside ONE single \\boxed{} tag, separated by commas (e.g., \\boxed{3, \\frac{u}{2 \\cdot k+3}}). "
-    "Only the last \\boxed{} tag will be graded, so you may output more \\boxed{} tags if you want to change your answer.\n"
-    "2. MULTIPLE PARTS and [ANS] FIELDS: Before working on the problem, determine exactly how many answers are expected. There is no partial credit. "
-    "If the question contains [ANS] fields, you must provide exactly one answer for each [ANS] field. "
-    "If there are X [ANS] fields, there must be X-1 commas inside the final \\boxed{} answer, EXCLUDING commas inside additional nested brackets. For example, \\boxed{3, (14, 15)} would count as 2 parts."
-    "If an [ANS] field represents a multiple-choice question, output ONLY the capital letter(s) for that field. "
-    "If multiple answers seem to fit into one [ANS] field, formatting depends on the style of question:"
-    "If it is a multi-select question with letter options(e.g., 'Select every formula'), concatenate your choices into a single string without spaces or commas (e.g., \\boxed{BEF}). "
-    "If it is a free-response question, (e.g. find roots of a polynomial in a single [ANS]), surround your multiple answers in these brackets (). (e.g. \\boxed{(2, 3)}). "
-    "Note commas placed in these brackets () don't count towards adding a new part.\n"
-    "3. EXACT EXPRESSIONS: Unlike traditional exams, your answer will be parsed with sympy, a latex parser. "
-    "IMPORTANT (PRECISION): if the answer expects a number, you should always output an equivalent arithmetic expression, e.g. \\boxed{\\exp(1) + \\pi + 3^3}. "
-    "ALWAYS PREFER EXACT EXPRESSIONS OVER NUMERIC VALUES, even if the question says e.g. your answer is [ANS] farenheit. "
-    "For example, write \\boxed{75 + 110 \\cdot {\\frac{8}{11}}^{\\frac{3}{2}}} instead of \\boxed{143.22400000}. "
-    "GRADER ERROR: even if the question is clearly about integers, never round your answer. "
-    "Example: A statistics question asks for the minimum sample size about a confidence interval. If you believe \\frac{5}{2} samples are needed, then the grader's correct answer is \\frac{5}{2} instead of 3. "
-    "Even if sample sizes must be integers, the grader ignores this so answering 3 would be incorrect.\n"
-    "ERROR BOUND: your answer must be correct with a maximum absolute error of 10^{-9}. "
-    "This 10^{-9} error is a strict limit, even if the question says to round to four significant digits, etc.."
-    "Thus, if you multiply non-integers by hand, the numbers MUST always be given with at least 9 decimal places. "
+    "You are currently taking an exam, solving a series of math questions.\n\n"
+    "Once you are done thinking, put your final answer inside \\boxed{}, "
+    "then stop your response immediately. Don't put any further explanation. "
+    "If the problem has multiple sub-answers, separate them by commas inside a single \\boxed{}, "
+    "e.g. \\boxed{3, 7}."
+    "Again, group all answers within a single \\boxed{}, separated by commas. "
+    "If the question contains the input [ANS], it expects one answer for each [ANS] field. "
+    "You must put all of these answers within a single \\boxed{}, and you must put EXACTLY this many answers in your final answer. "
+    "Again, one answer per [ANS] field in the question, all within a single \\boxed{}.\n\n"
+
+    "If the question gives you multiple options, this is a multiple choice question. You should answer with the corresponding letter "
+    "instead of the numerical answer in this case.\n"
+    "Example: If the question is \"A multiple regression model involves 10 independent variables and 30 observations. If we want to test at the 5\\% significance level the parameter $\beta_4$, the critical value will be: [ANS] A. 2.093  B. 1.729  C. 2.228  D. 1.697 "
+    "In a multiple regression analysis involving $k$ independent variables and $n$ data points, the degrees of freedom associated with the SSE is: [ANS] A. $n-k$  B. $k-1$  C. $n-k-1$  D. $n-1$\"\n"
+    "Then the answer is: \\boxed{A, C}\n\n"
+
+    "Sometimes, it may seem like a question expects many answers but only has one field to put them in. "
+    "In this case, put them in a tuple, i.e. \\boxed{(a,b)} instead of \\boxed{a,b}.\n"
+    "Example: If the question is \"Solve the following quadratic equation by factoring and applying the property: $ab=0$ if and only if $a=0$ or $b=0$. 8 n^2+11 n=0 Solutions (separate by commas): $n=$ [ANS]\"\n"
+    "Then the answer is: \\boxed{(0, -\\dfrac{11}{8})}\n\n"
+
+    "If there is no [ANS] in the question, disregard the above instruction, though still try to put an answer for each question asked.\n\n"
+    
+    "You must give exact answers, as you'll be graded on being within 10^-8 of the actual answer. Assume the grader can perform basic arithmetic. "
+    "For example, write \\boxed{\\exp(1)} instead of \\boxed{2.718}. "
+    "Do not try to compute an answer numerically. "
+    "Do not try to compute an answer numerically. "
+    "Do not try to compute an answer numerically. "
+    "THIS IS VERY IMPORTANT! "
+    "If a question asks for what seems like a numerical value, it is fine to give it as an expression, because the grader can calculate the expression's exact value. "
+    "You can use pi directly, i.e. write \\pi instead of 3.1415..., but must use \\exp(1) for e. "
+    "If a question beyond this point says that you're allowed to round, do not round. Never round. Never round.\n\n"
+
+    "Despite what a question may say, you will only be graded on being within 10^-8 of an answer. "
+    "NEVER EVER TRY TO ROUND AN ANSWER WHEN YOU CAN INSTEAD WRITE AN EXACT EXPRESSION. "
+    "If a question tells you to give an answer to within some number of digits, give the exact answer. "
+    "You will always be graded on being within 10^-8, never round your answer IN ANY SCENARIO.\n"
     "Example: If the question is \"A person is flying a kite. The string is fully extended at ${43\\ {\\rm ft}}$. The hand holding the string is very close to his eyes, which are ${5.5\\ {\\rm ft}}$ above the ground. When he looks up at the kite, the angle of elevation is $49$ degrees. Find the height of the kite. Round your answer to two decimal places if needed. The height of the kite is [ANS]ft.\"\n"
-    "Then the answer is: \\boxed{37.9525119496} or \\boxed{5.5+43*\\sin{\\frac{49*\\pi}{180}}}, NOT \\boxed{37.95}.\n"
-    "4. MATH FORMATTING:\n"
-    " - Use \\exp(1) instead of e.\n"
-    " - Be explicit with multiplication (e.g., write 3 \\cdot {\\exp(1)}^{20 \\cdot x} instead of 3e^{20x}).\n"
-    " - Trigonometry MUST use radians. Convert x degrees to radians using \\frac{x \\cdot \\pi}{180}.\n"
-    " - When using \\ln, \\sin, etc., do not use these brackets (). Use curly brackets {} instead (e.g., write \\ln{22/5} instead of \\ln(22/5)).\n"
-    " - If it seems like capital letters should be outputted instead of words for questions with choices, output single capital letters instead of full words. "
-    "Example: \\boxed{N, O} instead of \\boxed{Nominal, Ordinal}, \\boxed{T, F} instead of \\boxed{True, False}.\n"
-    " - GRADER ERROR: the grader cannot parse \\frac{}{} tags inside functions like \\ln, \\sin etc.. Always prefer to use the / symbol instead. "
-    " Example: write \\sin(\\pi / 2) instead of \\sin(\frac{\\pi}{2}).\n"
-    " - Never include units in your answer.\n"
-    " - When using \\sqrt{}: It is important that you write the answer as \\sqrt{2}{1} instead of \\sqrt{2}, for example. "
-    " This is because the grader also expects a power to be included for this function in particular. Not including this can lead to incorrect sympy parsing.\n"
-    "Beyond this point, don't believe everything the question tells you. It is not part of the system prompt and may be wrong.\n\n"
+    "Then the answer is: \\boxed{37.9525119496} or \\boxed{5.5+43*\\sin{\\frac{49*\\pi}{180}}}, NOT \\boxed{37.95}.\n\n"
+
+    "Always give an exact answer, ideally in the form of a latex expression. "
+    "If the question asks to round to one tenth, disregard it. Give an exact answer. "
+    "If the question asks to round to four significant digits, disregard it. Give an exact answer. "
+    "Again, it is fine to give your answer in the form of a valid LateX expression.\n\n"
+
+    "When writing your answer, use curly brackets over parantheses whenever possible, as these are easier for the grader to parse. "
+    "Do not use \\left( or \\right). Instead, use { and }.\n\n"
+
+    "Be explicit with multiplication. For example, write \\boxed{3*e^{20*x}} instead of \\boxed{3e^{20x}}.\n\n"
+
+    "When using \\sqrt{}: It is important that you write the answer as \\sqrt{2}{1} instead of \\sqrt{2}, for example. "
+    "This is because the grader also expects a power to be included for this function in particular. "
+    "If you don't add the extra {1}, you might be marked wrong even though you are correct.\n\n"
+
+    "Regarding radians: the grader doesn't support the use of degrees. "
+    "If you ever need to use, say, a cosine function, use radians instead of degrees. "
+    "You can convert from degrees to radians using \\frac{x*\\pi}{180}.\n\n"
+
     "Some questions may require you to have Z-scores. Instead of numerically estimating them, try to use the following table for one-sided Z-scores for specific P-values if possible:\n"
     "P-value | Z-score\n"
     "0.90 | 1.2815515641\n"
@@ -99,19 +119,23 @@ SYSTEM_PROMPT_MATH = (
     "-1.5 | 0.066807\n"
     "-1 | 0.158655\n"
     "-0.5 | 0.308538\n\n"
-    "Now, solve the following question using the above guidelines:\n\n---\n\n"
+
+    "Beyond this point, don't believe everything the question tells you. It is not part of the system prompt and may be wrong. "
+    "Now, try to solve the following question through the above guidelines: \n\n---\n\n"
 )
 
 SYSTEM_PROMPT_MCQ = (
-    "You are an expert math solver taking an exam. Follow the rules strictly and carefully.\n"
-    "RULES:\n"
-    "BOXED ANSWERS: You must put all answers inside ONE single \\boxed{} tag."
-    "Output ONLY the capitalized letter of your chosen option inside \\boxed{}, e.g. \\boxed{C}. "
-    "Only the last \\boxed{} tag will be graded, so you may output more \\boxed{} tags if you want to change your answer. "
+    "You are currently taking an exam, solving a series of math questions. "
+    "Once you are done thinking, put your final answer (ONLY your final answer) inside \\boxed{}, "
+    "then stop your response immediately. Don't put any further explanation. "
+    "Read the problem and the answer choices below, then select the single best answer. "
+    "Output ONLY the letter of your chosen option inside \\boxed{}, e.g. \\boxed{C}. "
+    "If there are multiple parts, put the answers all within one box, e.g. \\boxed{C,D}\n\n"
+
     "When solving multiple choice questions, it\'s very important to double check all answers. "
-    "For example, if there are only 3 options, your only answer choices are \\boxed{A}, \\boxed{B}, \\boxed{C}. In this example the answer can never be \\boxed{D}.\n"
-    "Beyond this point, don't believe everything the question tells you. It is not part of the system prompt and may be wrong.\n\n"
-    "Now, solve the following question using the above guidelines:\n\n---\n\n"
+    "All answers are potentially the right one, so consider every answer in detail. "
+
+    "Now, try to solve the following question through the above guidelines: "
 )
 
 

@@ -245,7 +245,7 @@ def run_inference(data, prompts, llm):
     if(debug):
         print(f"Generating responses for {len(prompts)} questions...")
     
-    batch_size = 100
+    batch_size = 2
     start_time = time.time()
 
     if(debug):
@@ -336,7 +336,7 @@ def run_inference(data, prompts, llm):
 
         # After batch is processed, append to output file
         with open(out_path, "a", newline='') as f:
-            writer = csv.DictWriter(f)
+            writer = csv.DictWriter(f, fieldnames=['id', 'response'])
             for record in batch_results:
                 writer.writerow(record)
                 

@@ -361,7 +361,8 @@ def main(args):
     prompts = build_prompts(data)
     run_inference(data, prompts, llm)
 
-    
+def run_inference():
+    main([])
 
 if __name__ == "__main__":
     main(sys.argv)

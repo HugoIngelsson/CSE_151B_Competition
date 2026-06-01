@@ -46,7 +46,7 @@ def has_answer(s):
     return True
 
 ### Majority voting
-def majority_vote_jsonl(file_paths: List[str], output_path: str, weights: list) -> None:
+def majority_vote_jsonl(file_paths: List[str], output_path: str, weights: list, weight_mcq_equally=True) -> None:
     """
     Performs majority voting across multiple JSONL result files.
     Aligns questions by their 'id' field.
@@ -121,14 +121,14 @@ def majority_vote_jsonl(file_paths: List[str], output_path: str, weights: list) 
         from judger import Judger
         judger = Judger(strict_extract=False)
 
-        match_counts = [weights[i] for i in answer_file_indices]
+        match_counts = [1 if is_mcq else weights[i] for i in answer_file_indices]
         for i in range(len(extracted_answers)-1):
             for j in range(i+1,len(extracted_answers)):
                 gold = judger.split_by_comma(extracted_answers[j])
                 result = judger.auto_judge(f'\\boxed{'{'}{extracted_answers[i]}{'}'}', gold, [chr(i+65) for i in range(26)])
                 if result:
-                    match_counts[i] += 1
-                    match_counts[j] += 1
+                    match_counts[i] += 1 if is_mcq else weights[j]
+                    match_counts[j] += 1 if is_mcq else weights[i]
 
         # Count votes
         max_votes = max(match_counts)
@@ -206,12 +206,21 @@ if __name__ == "__main__":
         "results/voting/v3.jsonl", 
         "results/voting/v4.jsonl",
         "results/voting/v5.jsonl",
+        "results/voting/v6.jsonl",
+        "results/voting/v7.jsonl",
+        "results/voting/v8.jsonl",
+        "results/voting/v9.jsonl",
+        "results/voting/v10.jsonl",
+        "results/voting/v11.jsonl",
+        "results/voting/v12.jsonl",
         "results/super-detailed/super-duper-detailed-prompt.jsonl",
+        "results/super-detailed/rerun-reindexed.jsonl",
     ]
 
     output_file = "results/FINAL_COMBINED.jsonl"
 
     weights = [1] * len(input_files)
-    weights[-1] = 6
+    weights[-2] = 12
+    weights[-1] = 12
     
     majority_vote_jsonl(input_files, output_file, weights)

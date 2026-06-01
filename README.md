@@ -43,3 +43,5 @@ When using an **NVIDIA l40s** on [DSMLP](https://datahub.ucsd.edu/hub/login?next
 Note that `run_inference.py` generates responses in batches of 100, so if execution is terminated, intermediate results still may be saved. 
 
 If execution is terminated, rerunning `run_inference.py` will continue to run inference **only on unanswered questions**. Because of this, it is important **not to delete/modify `result.csv`**, or else progress may be lost.
+
+Also note that `run_inference.py` exposes a function `run_inference()` that effectively just runs this file.

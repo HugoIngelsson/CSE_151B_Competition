@@ -877,7 +877,6 @@ class Judger:
             return expression.strip()
         exp1 = extract_expression(pred)
         exp2 = extract_expression(gold)
-        print(exp1, exp2)
         expr1_sym = trigsimp(self.sympy_sub_pi(sympify(parse_latex(exp1))))
         expr2_sym = trigsimp(self.sympy_sub_pi(sympify(parse_latex(exp2))))
 

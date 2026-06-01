@@ -232,7 +232,7 @@ def extract_letter(text: str) -> str:
     matches = re.findall(r"\b([A-Z])\b", search_text.upper())
     return matches[-1] if matches else ""
 
-def run_inference(data, prompts, llm): 
+def inference(data, prompts, llm): 
     # Load Judger for free-form scoring
     sys.path.insert(0, ".")
     judger = Judger(strict_extract=False)
@@ -383,7 +383,7 @@ def main(args):
 
     # start inference
     prompts = build_prompts(data)
-    run_inference(data, prompts, llm)
+    inference(data, prompts, llm)
 
 def run_inference():
     main([])

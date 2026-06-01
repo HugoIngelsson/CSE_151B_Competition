@@ -176,7 +176,7 @@ def load_data():
 
         
     all_data = [json.loads(line) for line in open(DATA_PATH)]
-    data = [d for d in all_data if d.get("id") not in existing_ids]
+    data = [d for d in all_data if str(d.get("id")) not in existing_ids]
 
     # If everything done
     if len(data) == 0:
